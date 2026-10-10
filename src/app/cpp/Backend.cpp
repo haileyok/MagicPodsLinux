@@ -282,6 +282,20 @@ void Backend::setCapability(const QString &capability, const QString &address, c
     });
 }
 
+void Backend::setCapabilityObject(const QString &capability, const QString &address, const QVariantMap &value)
+{
+    QVariantMap capabilities;
+    capabilities.insert(capability, value);
+
+    sendJson({
+        {QStringLiteral("method"), QStringLiteral("SetCapabilities")},
+        {QStringLiteral("arguments"), QVariantMap{
+             {QStringLiteral("address"), address},
+             {QStringLiteral("capabilities"), capabilities},
+         }},
+    });
+}
+
 void Backend::setLogLevel(int value)
 {
     sendJson({

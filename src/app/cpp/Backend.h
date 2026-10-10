@@ -28,6 +28,10 @@ public:
     Q_INVOKABLE void disconnectSocket();
     Q_INVOKABLE void getAll();
     Q_INVOKABLE void getInfo();
+    // Fork: SetCapabilities with a full capability object (not wrapped in
+    // "selected") — for capabilities whose payload is a map, e.g. the
+    // hi-res mic {enabled} and handoff {enabled, action}.
+    Q_INVOKABLE void setCapabilityObject(const QString &capability, const QString &address, const QVariantMap &value);
     Q_INVOKABLE void getDevices();
     Q_INVOKABLE void getDefaultBluetoothAdapter();
     Q_INVOKABLE void getSetting(const QString &containerName, const QString &settingName);

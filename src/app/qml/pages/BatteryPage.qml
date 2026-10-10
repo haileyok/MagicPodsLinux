@@ -40,6 +40,12 @@ QQC2.Page {
     readonly property var volumeSwipeLengthData: capabilities?.volumeSwipeLength ?? null
     readonly property var endCallData: capabilities?.endCall ?? null
     readonly property var bluetoothCodec: capabilities?.bluetoothCodec ?? null
+    // Fork additions: AirPods hi-res mic (AAC-ELD over AACP 0x58) and
+    // Smart Routing handoff. Both arrive through the same capabilities
+    // JSON the backend broadcasts; null when the fork backend isn't running.
+    readonly property var hiresMicData: capabilities?.hires_mic ?? null
+    readonly property var handoffData: capabilities?.handoff ?? null
+    readonly property bool otherHostPresent: handoffData?.other_host_present ?? false
     readonly property int mWidth: MP.Units.gridUnit * 12
 
     readonly property bool hasCapabilities: !!capabilities && [ancData, conversationAwarenessData, personalizedVolumeData, ancOneAirPodData, volumeSwipeData, adaptiveAudioNoiseData, pressAndHoldDurationData, pressSpeedData, toneVolumeData, volumeSwipeLengthData, endCallData, bluetoothCodec].some(function (v) {
@@ -408,6 +414,76 @@ QQC2.Page {
                                 rootPage.conversationAwarenessData.selected = checked;
                                 cppBackend.setCapability("conversationAwareness", rootPage.currentAddress(), checked);
                             }
+                        }
+                    }
+                }
+
+                // Fork: hi-res microphone (AAC-ELD over AACP 0x58 — the
+                // Mac-style voice path; A2DP keeps playing while the mic
+                // streams). Toggle arms the capability; the virtual source
+                // "AirPodsHiRes" appears while connected.
+                MP.FormRow {
+                    Layout.fillWidth: true
+                    visible: rootPage.hiresMicData !== null
+                    label: qsTr("Hi-res microphone")
+
+                    QQC2.Switch {
+                        checked: rootPage.hiresMicData?.enabled ?? false
+                        enabled: !(rootPage.hiresMicData?.readonly ?? true)
+                        onToggled: {
+                            if (rootPage.hiresMicData) {
+                                cppBackend.setCapabilityObject("hires_mic", rootPage.currentAddress(), { "enabled": checked });
+                            }
+                        }
+                    }
+                }
+
+                // Fork: Smart Routing handoff (AACP 0x10). Enabling only arms
+                // it; the hijack/release actions below are explicit.
+                MP.FormRow {
+                    Layout.fillWidth: true
+                    visible: rootPage.handoffData !== null
+                    label: qsTr("Handoff")
+
+                    QQC2.Switch {
+                        checked: rootPage.handoffData?.enabled ?? false
+                        enabled: !(rootPage.handoffData?.readonly ?? true)
+                        onToggled: {
+                            if (rootPage.handoffData) {
+                                cppBackend.setCapabilityObject("handoff", rootPage.currentAddress(), { "enabled": checked });
+                            }
+                        }
+                    }
+                }
+
+                // Fork: take the buds from the other connected host.
+                // Only shown when handoff is armed and another host is
+                // connected to the buds.
+                MP.FormRow {
+                    Layout.fillWidth: true
+                    visible: rootPage.handoffData !== null && (rootPage.handoffData?.enabled ?? false)
+                    label: qsTr("Take from other host")
+
+                    QQC2.Button {
+                        enabled: rootPage.otherHostPresent
+                        text: rootPage.otherHostPresent ? qsTr("Hijack") : qsTr("No other host")
+                        onClicked: {
+                            cppBackend.setCapabilityObject("handoff", rootPage.currentAddress(), { "action": "hijack" });
+                        }
+                    }
+                }
+
+                // Fork: release the buds back to the other host.
+                MP.FormRow {
+                    Layout.fillWidth: true
+                    visible: rootPage.handoffData !== null && (rootPage.handoffData?.enabled ?? false)
+                    label: qsTr("Release to other host")
+
+                    QQC2.Button {
+                        enabled: rootPage.otherHostPresent
+                        text: qsTr("Release")
+                        onClicked: {
+                            cppBackend.setCapabilityObject("handoff", rootPage.currentAddress(), { "action": "release" });
                         }
                     }
                 }
