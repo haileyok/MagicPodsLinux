@@ -26,6 +26,42 @@ An iPhone-style pop-up window appears when you open the charging case of your Ai
 
 Customize how your AirPods or Beats behave with support for Conversation Awareness, Personalized Volume, Adaptive Audio tuning, and configurable touch controls.
 
+## ⚡ This fork: AirPods Mac-parity (hi-res mic + seamless handoff)
+
+This branch (`hailey/mac-parity`) ports the remaining AirPods behaviors that
+make them feel like they do on a Mac. The core submodule is pinned to
+[haileyok/MagicPodsCore](https://github.com/haileyok/MagicPodsCore) branch
+`hailey/handoff`.
+
+**What's added on top of upstream:**
+
+- **Hi-res microphone** — Apple's voice codec (AAC-ELD 64 kHz, AACP opcode
+  `0x58`) instead of BlueZ's 8 kHz HFP mics. With MagicPods running, a
+  PulseAudio source named **`AirPodsHiRes`** appears: select it as your mic in
+  any app (Google Meet, Discord, browsers). A2DP playback stays at full
+  quality while the mic is active — no profile switch, no 8 kHz downgrade.
+- **Seamless handoff (Smart Routing)** — the AACP `0x10` takeover protocol:
+  see connected devices, hijack the buds from another Apple host (your
+  iPhone), and release them back, from the headphones page in the app.
+- All upstream features (battery, noise control, pop-up, advanced controls)
+  are unchanged.
+
+**Build:** clone with submodules (`git clone --recurse-submodules -b
+hailey/mac-parity https://github.com/haileyok/MagicPodsLinux.git`), then build
+the core and the app per upstream's instructions. For a fully declarative
+setup, [haileyok/dotfiles](https://github.com/haileyok/dotfiles) builds and
+installs both from these branches via a Nix flake — see the "AirPods /
+earbuds" section of its README for the full recipe, including the BlueZ
+DeviceID handshake and the two WirePlumber settings.
+
+**Caveats (learned live on AirPods Pro 2 + PipeWire):** WirePlumber must not
+autoswitch to HFP when an app opens the mic
+(`bluetooth.autoswitch-to-headset-profile = false`); heavy PipeWire churn can
+poison the compat layer's routing — fix with `systemctl --user restart
+pipewire pipewire-pulse wireplumber` and restart any apps that were playing
+audio. Hi-res mic was verified end-to-end on AirPods Pro 2; upstream tested
+AirPods Pro 3 only.
+
 ## 🎧 Headphones supported
 
 | Apple            | Beats                  | Samsung           |
