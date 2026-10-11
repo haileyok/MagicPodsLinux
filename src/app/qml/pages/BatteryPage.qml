@@ -45,7 +45,6 @@ QQC2.Page {
     // JSON the backend broadcasts; null when the fork backend isn't running.
     readonly property var hiresMicData: capabilities?.hires_mic ?? null
     readonly property var handoffData: capabilities?.handoff ?? null
-    readonly property var headTrackingData: capabilities?.head_tracking ?? null
     readonly property bool otherHostPresent: handoffData?.other_host_present ?? false
     readonly property int mWidth: MP.Units.gridUnit * 12
 
@@ -485,41 +484,6 @@ QQC2.Page {
                         text: qsTr("Release")
                         onClicked: {
                             cppBackend.setCapabilityObject("handoff", rootPage.currentAddress(), { "action": "release" });
-                        }
-                    }
-                }
-
-                // Fork: head tracking (AACP 0x17) — AirPods IMU orientation
-                // stream at ~50 Hz for spatial audio. "Enable" arms the
-                // capability; "Tracking" starts/stops the sensor stream.
-                MP.FormRow {
-                    Layout.fillWidth: true
-                    visible: rootPage.headTrackingData !== null
-                    label: qsTr("Head tracking")
-
-                    QQC2.Switch {
-                        checked: rootPage.headTrackingData?.enabled ?? false
-                        enabled: !(rootPage.headTrackingData?.readonly ?? true)
-                        onToggled: {
-                            if (rootPage.headTrackingData) {
-                                cppBackend.setCapabilityObject("head_tracking", rootPage.currentAddress(), { "enabled": checked });
-                            }
-                        }
-                    }
-                }
-
-                MP.FormRow {
-                    Layout.fillWidth: true
-                    visible: rootPage.headTrackingData !== null && (rootPage.headTrackingData?.enabled ?? false)
-                    label: qsTr("Orientation stream")
-
-                    QQC2.Switch {
-                        checked: rootPage.headTrackingData?.tracking ?? false
-                        enabled: !(rootPage.headTrackingData?.readonly ?? true)
-                        onToggled: {
-                            if (rootPage.headTrackingData) {
-                                cppBackend.setCapabilityObject("head_tracking", rootPage.currentAddress(), { "tracking": checked });
-                            }
                         }
                     }
                 }
